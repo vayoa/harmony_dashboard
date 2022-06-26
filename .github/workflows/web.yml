@@ -3,7 +3,6 @@ name: Gh-Pages
 on:
   workflow_dispatch:
   push:
-    branches: [ master ]
     tags: [ deployment ]
 
 jobs:
@@ -12,6 +11,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2 # Only works with v2
+
+      - name: Exit if not on master branch
+        if: endsWith(github.ref, 'master') == false
+        run: exit -1
+
       - uses: subosito/flutter-action@v1
       - uses: bluefireteam/flutter-gh-pages@v7
         with:
