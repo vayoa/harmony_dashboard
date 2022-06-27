@@ -107,7 +107,7 @@ packages:
     description:
       path: "."
       ref: "feat/inversions"
-      resolved-ref: af4148181c0098a9ba85521c7bd9a5ec87ee8a51
+      resolved-ref: "20eccd256e572c3ea962b8f9fd41dd0a6c972667"
       url: "https://github.com/vayoa/theory_test.git"
     source: git
     version: "1.0.0+1"

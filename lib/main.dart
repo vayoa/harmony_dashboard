@@ -1,7 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:harmony_dashboard/widgets/parser_widgets.dart';
+import 'package:harmony_theory/modals/theory_base/pitch_scale.dart';
 import 'package:harmony_theory/tests/parsing_test.dart';
+import 'package:tonic/tonic.dart';
 
 void main() {
   runApp(const MyApp());
@@ -34,6 +36,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   ParsingTestResult? result;
+  String parsingInput = '';
+  PitchScale? scale;
 
   @override
   Widget build(BuildContext context) {
@@ -43,71 +47,122 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text('Chord Parsing Test',
-                style: Theme.of(context).textTheme.headline5),
-            const SizedBox(height: 8),
-            TextField(
-              maxLines: 1,
-              decoration: const InputDecoration(
-                isDense: true,
-                constraints: BoxConstraints(maxWidth: 600),
+            Flexible(
+              flex: 7,
+              child: Section(
+                title: 'Chord Parsing Test',
                 hintText: 'Type a chord here...',
                 labelText: 'Try Parsing: ',
+                suffixIcon: const Icon(Icons.forward_rounded),
+                onChanged: (input) => setState(() => _handleInput(input)),
+                children: result == null
+                    ? const []
+                    : [
+                        const SizedBox(height: 20.0),
+                        (result!.error != null
+                            ? ParseError(exception: result!.error!)
+                            : ParseInfo(spec: result!.originalSpec!)),
+                      ],
               ),
-              onChanged: (input) => setState(() =>
-                  result = input.isEmpty ? null : ParsingTest.test(input)),
             ),
-            if (result != null) ...[
-              const SizedBox(height: 20.0),
-              SelectableText.rich(
-                TextSpan(children: _buildSpan()),
-                style: const TextStyle(fontSize: 16.0),
+            const Spacer(),
+            Flexible(
+              flex: 7,
+              child: Section(
+                title: 'Conversion Test',
+                hintText: (result == null || result!.convertedScale == null)
+                    ? 'Type a scale here...'
+                    : result!.convertedScale!,
+                labelText: 'Try Scale: ',
+                suffixIcon:
+                    scale == null ? null : const Icon(Icons.check_rounded),
+                onChanged: (input) => setState(() {
+                  scale = _parse(input);
+                  _handleInput(parsingInput);
+                }),
+                children: result == null
+                    ? const []
+                    : [
+                        const SizedBox(height: 20.0),
+                        if (result!.error == null)
+                          ParseInfo(spec: result!.convertedSpec!),
+                      ],
               ),
-            ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  List<TextSpan> _buildSpan() {
-    if (result!.error != null) {
-      return [
-        _boldSpan('Error!\n'),
-        TextSpan(text: '${result!.error}.'),
-      ];
-    }
-    ParsingTestResultSpec spec = result!.spec!;
-    return [
-      ..._group('Found Type', spec.type),
-      ..._group('Root', spec.root),
-      ..._group(
-        'Bass',
-        spec.bass + (spec.root == spec.bass ? ' (same as root)' : ''),
-      ),
-      ..._group('Pattern', spec.pattern),
-      ..._group('\nDisplayed As', '', suffix: ''),
-      TextSpan(
-        text: '${spec.object}.',
-        style: GoogleFonts.roboto(
-          color: Theme.of(context).primaryColor,
-          fontSize: 24.0,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ];
+  _handleInput(String input) {
+    parsingInput = input;
+    result = parsingInput.isEmpty
+        ? null
+        : ParsingTest.test(parsingInput, scale: scale);
   }
 
-  TextSpan _boldSpan(String text) =>
-      TextSpan(text: text, style: const TextStyle(fontWeight: FontWeight.bold));
+  static final RegExp _scaleRegex =
+      RegExp(r"([a-gA-G],*'*[#b♯♭𝄪𝄫]*)[\W]*(m|minor|major)", caseSensitive: false);
 
-  List<TextSpan> _group(String header, String text, {String suffix = '.\n'}) =>
-      [
-        _boldSpan('$header: '),
-        TextSpan(text: text),
-        TextSpan(text: suffix),
-      ];
+  PitchScale? _parse(String input) {
+    final match = _scaleRegex.matchAsPrefix(input);
+    if (match == null) return null;
+    try {
+      return PitchScale.common(
+          tonic: Pitch.parse(match[1]!),
+          minor: match[2] != null &&
+              (match[2] == 'm' ||
+                  match[2]!.contains(RegExp('minor', caseSensitive: false))));
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
+class Section extends StatelessWidget {
+  const Section({
+    Key? key,
+    required this.title,
+    required this.hintText,
+    required this.labelText,
+    required this.children,
+    required this.onChanged,
+    this.suffixIcon,
+  }) : super(key: key);
+
+  final String title;
+  final String hintText;
+  final String labelText;
+  final List<Widget> children;
+  final void Function(String) onChanged;
+  final Widget? suffixIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.headline5),
+        const SizedBox(height: 8),
+        TextField(
+          maxLines: 1,
+          decoration: InputDecoration(
+            isDense: true,
+            constraints: const BoxConstraints(
+              minWidth: 100,
+              maxWidth: 600,
+            ),
+            hintText: hintText,
+            labelText: labelText,
+            suffixIcon: suffixIcon,
+          ),
+          onChanged: onChanged,
+        ),
+        ...children,
+      ],
+    );
+  }
 }
