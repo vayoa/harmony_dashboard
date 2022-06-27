@@ -3,7 +3,7 @@ name: Gh-Pages
 on:
   workflow_dispatch:
   push:
-    tags: [ deploy-* ]
+    tags: [ deploy* ]
 
 jobs:
   build:
