@@ -105,7 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   static final RegExp _scaleRegex =
-      RegExp(r"([a-gA-G],*'*[#b♯♭𝄪𝄫]*)[\W]*(m|minor|major)", caseSensitive: false);
+      RegExp(r"([a-gA-G],*'*[#b♯♭𝄪𝄫]*)[\W]*(minor|major|m)", caseSensitive: false);
 
   PitchScale? _parse(String input) {
     final match = _scaleRegex.matchAsPrefix(input);
