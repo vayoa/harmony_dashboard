@@ -16,3 +16,4 @@ jobs:
         with:
           webRenderer: html
           baseHref: /harmony_dashboard/
+          customArgs: --dart-define="NOTION_TOKEN=${{ secrets.NOTION_TOKEN }}"

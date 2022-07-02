@@ -40,6 +40,8 @@ dependencies:
       url: https://github.com/vayoa/theory_test.git
       ref: feat/inversions
   google_fonts: ^3.0.1
+  intl: ^0.17.0
+  http: ^0.13.4
 
 dev_dependencies:
   flutter_test:
