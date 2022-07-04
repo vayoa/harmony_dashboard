@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:harmony_dashboard/modals/notion_page.dart';
 import 'package:harmony_dashboard/widgets/parser_widgets.dart';
 import 'package:harmony_theory/modals/theory_base/pitch_scale.dart';
 import 'package:harmony_theory/tests/parsing_test.dart';
@@ -14,7 +13,6 @@ void main() {
   runApp(const MyApp());
 }
 
-const String notionAPI = String.fromEnvironment("NOTION_TOKEN");
 const String databaseID = r"73162819dd27463591aadf676443733f";
 
 class MyApp extends StatelessWidget {
@@ -202,6 +200,10 @@ class _SectionState extends State<Section> {
                     final ReportResult? result =
                         await _pushReportDialog(context);
                     if (result != null) {
+                      if (result == ReportResult.success) {
+                        _controller.text = '';
+                        widget.onChanged('');
+                      }
                       ScaffoldMessenger.of(context).clearSnackBars();
                       final color = result.color;
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -444,74 +446,35 @@ class _SectionReportFormState extends State<_SectionReportForm> {
   }
 
   void _handleSubmit() async {
+    const String createUrl =
+        r"https://harmony-dashboard-server.herokuapp.com/create";
     if (_formKey.currentState!.validate()) {
       final headers = {
-        "Authorization": "Bearer " + notionAPI,
         "Content-Type": "application/json",
-        "Notion-Version": "2022-02-22"
+        "Access-Control-Allow-Origin": '*',
       };
-      if (!(await _exists(headers))) {
-        final response = await _createPage(headers);
-        Navigator.of(context).pop(
-          response.statusCode == 200
-              ? ReportResult.success
-              : ReportResult.failed,
-        );
-      } else {
-        Navigator.of(context).pop(ReportResult.exists);
-      }
+      final newPageData = {
+        "test": widget.testName,
+        "parent": databaseID,
+        "input": widget.input,
+        "expected": expected.text,
+        "result": widget.result,
+        "details": details.text,
+      };
+      final response = await http.post(
+        Uri.parse(createUrl),
+        headers: headers,
+        body: jsonEncode(newPageData),
+      );
+      Navigator.of(context).pop(
+        response.statusCode == 200
+            ? ReportResult.success
+            // TODO: Fix api to return whether it exits and not just read the fail message...
+            : (response.body.contains("exists")
+                ? ReportResult.exists
+                : ReportResult.failed),
+      );
     }
-  }
-
-  Future<bool> _exists(Map<String, String> headers) async {
-    final queryUrl = 'https://api.notion.com/v1/databases/$databaseID/query';
-    final data = {
-      'filter': {
-        'and': [
-          {
-            "property": "Related Test",
-            "select": {"equals": widget.testName},
-          },
-          // This way if the same report was done but the problem wasn't solved we can still
-          // report it...
-          {
-            "property": "Status",
-            "select": {"does_not_equal": 'Done 🙌'},
-          },
-          {
-            "property": "Input",
-            "rich_text": {"equals": widget.input},
-          },
-          {
-            "property": "Expected",
-            "rich_text": {"equals": expected.text},
-          },
-        ],
-      },
-    };
-    var r = await http.post(
-      Uri.parse(queryUrl),
-      headers: headers,
-      body: jsonEncode(data),
-    );
-    return Future.value((jsonDecode(r.body)['results'] as List).isNotEmpty);
-  }
-
-  Future<http.Response> _createPage(Map<String, String> headers) {
-    const createUrl = 'https://api.notion.com/v1/pages';
-    final newPageData = NotionPageScheme(
-      parent: databaseID,
-      input: widget.input,
-      result: widget.result,
-      expected: expected.text,
-      testName: widget.testName,
-      details: details.text,
-    );
-    return http.post(
-      Uri.parse(createUrl),
-      headers: headers,
-      body: jsonEncode(newPageData),
-    );
   }
 
   bool _isRTL(String text) => intl.Bidi.detectRtlDirectionality(text);
