@@ -54,21 +54,43 @@ class ParseInfo extends ParserWidget {
 
   @override
   List<InlineSpan> children(BuildContext context) => [
-    ...ParserWidget.group('Found Type', spec.type),
-    ...ParserWidget.group('Root', spec.root),
-    ...ParserWidget.group(
-      'Bass',
-      spec.bass + (spec.root == spec.bass ? ' (same as root)' : ''),
-    ),
-    ...ParserWidget.group('Pattern', spec.pattern),
-    ...ParserWidget.group('\nDisplayed As', '', suffix: ''),
-    TextSpan(
-      text: '${spec.object}.',
-      style: GoogleFonts.roboto(
-        color: Theme.of(context).primaryColor,
-        fontSize: 24.0,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-  ];
+        ...ParserWidget.group('Found Type', spec.type),
+        ...ParserWidget.group('Root', spec.root),
+        ...ParserWidget.group(
+          'Bass',
+          spec.bass + (spec.root == spec.bass ? ' (same as root)' : ''),
+        ),
+        ...ParserWidget.group('Pattern', spec.pattern),
+        ...ParserWidget.group('\nDisplayed As', '', suffix: ''),
+        TextSpan(
+          text: '${spec.object}.',
+          style: GoogleFonts.roboto(
+            color: Theme.of(context).primaryColor,
+            fontSize: 24.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ];
+}
+
+class ProgressionParseInfo extends ParserWidget {
+  const ProgressionParseInfo({
+    Key? key,
+    required this.result,
+  }) : super(key: key);
+
+  final String result;
+
+  @override
+  List<InlineSpan> children(BuildContext context) => [
+        ParserWidget.boldSpan('Result: '),
+        TextSpan(
+          text: '$result.',
+          style: GoogleFonts.roboto(
+            color: Theme.of(context).primaryColor,
+            fontSize: 24.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ];
 }
