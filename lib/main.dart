@@ -170,7 +170,8 @@ class _MyHomePageState extends State<MyHomePage> {
                               const SizedBox(height: 20.0),
                               if (progressionResult!.error == null)
                                 ProgressionParseInfo(
-                                    result: progressionResult!.analyzedResult!),
+                                  result: progressionResult!.analyzedResult!,
+                                ),
                             ],
                     ),
                   ),
